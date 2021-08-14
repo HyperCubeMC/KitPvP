@@ -4,12 +4,14 @@
 
 Levels:
   Options:
+    Take-Levels-At-Zero-Experience: true
     Experience-To-Level-Up: 100
     Experience-Given-On-Kill: 15
     Experience-Taken-On-Death: 5
     Minimum-Level: 0
     Maximum-Level: 100
   Commands-On-Level-Up: []
+  Commands-On-Lose-Level: []
   Levels:
     0:
       Prefix: '&7Level %level%'
@@ -33,9 +35,12 @@ Levels:
       Prefix: '&7Level %level%'
     10:
       Prefix: '&7Level %level%'
-      Commands:
+      Commands-On-Level-Up:
         - 'console: say Congratulations to %player% for reaching Level %level%!'
-        - 'console: Commands on level can be edited via the levels.yml'
+        - 'console: Commands on level up can be edited via the levels.yml'
+      Commands-On-Lose-Level:
+        - 'console: say %player% has lost a level and are now Level %level%!'
+        - 'console: Commands on losing a level can be edited via the levels.yml'
       Experience-To-Level-Up: 98
     11:
       Prefix: '&7Level %level%'

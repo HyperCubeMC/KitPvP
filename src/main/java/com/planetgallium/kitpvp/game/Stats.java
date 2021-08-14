@@ -2,6 +2,7 @@ package com.planetgallium.kitpvp.game;
 
 import com.cryptomorin.xseries.XSound;
 import com.planetgallium.kitpvp.Game;
+import com.planetgallium.kitpvp.api.PlayerLevelDownEvent;
 import com.planetgallium.kitpvp.api.PlayerLevelUpEvent;
 import com.planetgallium.kitpvp.util.*;
 import com.zp4rker.localdb.DataType;
@@ -43,9 +44,19 @@ public class Stats {
         return 0.00;
     }
 
-    public void removeExperience(String username, int amount) {
+    public void removeExperience(Player p, int amount) {
+        String username = p.getName();
+
         if (levels.getBoolean("Levels.Levels.Enabled") && isPlayerRegistered(username)) {
             int currentExperience = getStat("experience", username);
+
+            if (levels.getBoolean("Levels.Options.Take-Levels-At-Zero-Experience") && currentExperience <= 0) {
+                levelDown(p);
+                Bukkit.getPluginManager().callEvent(new PlayerLevelDownEvent(p, getStat("level", p.getName())));
+
+                return;
+            }
+
             setStat("experience", username, currentExperience >= amount ? currentExperience - amount : 0);
         }
     }
@@ -74,17 +85,43 @@ public class Stats {
             List<String> levelUpCommands = levels.getStringList("Levels.Commands-On-Level-Up");
             Toolkit.runCommands(p, levelUpCommands, "%level%", String.valueOf(newLevel));
 
-            if (levels.contains("Levels.Levels." + newLevel + ".Commands")) {
-                List<String> commandsList = levels.getStringList("Levels.Levels." + newLevel + ".Commands");
+            if (levels.contains("Levels.Levels." + newLevel + ".Commands-On-Level-Up")) {
+                List<String> commandsList = levels.getStringList("Levels.Levels." + newLevel + ".Commands-On-Level-Up");
                 Toolkit.runCommands(p, commandsList, "%level%", String.valueOf(newLevel));
             }
 
-            p.sendMessage(resources.getMessages().getString("Messages.Other.Level")
+            p.sendMessage(resources.getMessages().getString("Messages.Other.Level-Up")
                                   .replace("%level%", String.valueOf(newLevel)));
             XSound.play(p, "ENTITY_PLAYER_LEVELUP, 1, 1");
 
         } else {
             setStat("experience", username, 0);
+        }
+
+    }
+
+    public void levelDown(Player p) {
+
+        String username = p.getName();
+
+        if (getStat("level", username) > levels.getInt("Levels.Options.Minimum-Level")) {
+
+            int newLevel = getStat("level", username) - 1;
+            setStat("level", username, newLevel);
+            setStat("experience", username, getRegularOrRelativeNeededExperience(username));
+
+            List<String> levelDownCommands = levels.getStringList("Levels.Commands-On-Lose-Level");
+            Toolkit.runCommands(p, levelDownCommands, "%level%", String.valueOf(newLevel));
+
+            if (levels.contains("Levels.Levels." + newLevel + ".Commands-On-Lose-Level")) {
+                List<String> commandsList = levels.getStringList("Levels.Levels." + newLevel + ".Commands-On-Lose-Level");
+                Toolkit.runCommands(p, commandsList, "%level%", String.valueOf(newLevel));
+            }
+
+            p.sendMessage(resources.getMessages().getString("Messages.Other.Level-Down")
+                    .replace("%level%", String.valueOf(newLevel)));
+            XSound.play(p, "ENTITY_PLAYER_ATTACK_CRIT, 1, 1");
+
         }
 
     }
